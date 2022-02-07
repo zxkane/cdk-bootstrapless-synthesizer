@@ -1,10 +1,11 @@
-import { Stack, StackProps, App, RemovalPolicy, Arn, Aws, Annotations, SecretValue } from 'aws-cdk-lib';
+import { Stack, StackProps, App, RemovalPolicy, Arn, Aws, Annotations } from 'aws-cdk-lib';
 import { PipelineProject, BuildSpec, LinuxBuildImage, ComputeType, BuildEnvironmentVariableType } from 'aws-cdk-lib/aws-codebuild';
 import { Pipeline, Artifact } from 'aws-cdk-lib/aws-codepipeline';
-import { CodeBuildAction, GitHubSourceAction } from 'aws-cdk-lib/aws-codepipeline-actions';
+import { CodeBuildAction, CodeCommitSourceAction } from 'aws-cdk-lib/aws-codepipeline-actions';
 import { Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+import { Repository } from 'aws-cdk-lib/aws-codecommit';
 
 /**
  * Stack to hold the pipeline
@@ -287,17 +288,25 @@ EOM
         }),
       ],
     }));
+    const repo = new Repository(this, 'Repo', {
+      repositoryName: 'MyApp',
+    });
     new Pipeline(this, 'CDKToCloudFormationPublishPipeline', {
       stages: [
         {
           stageName: 'Source',
           actions: [
-            new GitHubSourceAction({
-              actionName: 'GitHub_Source',
-              owner: 'aws-samples',
-              repo: 'cdk-bootstrapless-synthesizer',
-              branch: 'main',
-              oauthToken: SecretValue.secretsManager(githubToken),
+            // new GitHubSourceAction({
+            //   actionName: 'GitHub_Source',
+            //   owner: 'aws-samples',
+            //   repo: 'cdk-bootstrapless-synthesizer',
+            //   branch: 'main',
+            //   oauthToken: SecretValue.secretsManager(githubToken),
+            //   output: sourceOutput,
+            // }),
+            new CodeCommitSourceAction({
+              actionName: 'CodeCommit',
+              repository: repo,
               output: sourceOutput,
             }),
           ],
